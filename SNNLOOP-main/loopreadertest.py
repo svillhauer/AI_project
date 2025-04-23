@@ -26,7 +26,7 @@ from utils import build_reader_basename
 
 # Path to the dataset. Must be created by UCAMGEN or have the same format.
 # Please check the UCAMGEN repository for more information.
-PATH_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/REALDATASET/IMAGES" 
+PATH_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/IMAGES" 
 
 # Type of loop information: True -> Aimed at regression, False -> Aimed at
 # classification.

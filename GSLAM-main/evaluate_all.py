@@ -278,12 +278,12 @@ from imagematcher import ImageMatcher
 ###############################################################################
 
 # Path to dataset folder
-PATH_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM"
+PATH_DATASET= "/home/svillhauer/Desktop/AI_Project/UCAMGEN-main/SAMPLE_RANDOM"
 #PATH_DATASET='../../DATA/RANDSMALL/'
 
 # Path to trained Siamese Neural Network (loop detector) base name (file name
 # without extension).
-PATH_NNMODEL= "/home/svillhauer/Desktop/AI Project/SNNLOOP-main/MODELS/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16"
+PATH_NNMODEL= "/home/svillhauer/Desktop/AI_Project/SNNLOOP-main/MODELS/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16"
 #PATH_NNMODEL = '../../DATA/MODELS/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_32_16_EPOCHS10_CATEGORICAL_G0_05_G05_2_ENCODERTRAINED_LABELSNOTINVERTED'
 
 # Enable/disable components. Components are used in the following order:

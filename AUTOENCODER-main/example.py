@@ -47,9 +47,9 @@ import shutil
 #PATH_TRAIN = "/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTR/"          # The desired training directory
 #PATH_TEST = "/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTS/"           # The desired testing directory
 
-SOURCE_DIR = "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES" 
-PATH_TRAIN = "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTR/"        # The desired training directorY
-PATH_TEST = "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTS/"
+SOURCE_DIR = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES" 
+PATH_TRAIN = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTR/"        # The desired training directory
+PATH_TEST = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES/AUTIMGTS/"
 
 # Create the train and test directories if they don't exist
 os.makedirs(PATH_TRAIN, exist_ok=True)

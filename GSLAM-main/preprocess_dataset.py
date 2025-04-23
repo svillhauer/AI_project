@@ -37,7 +37,7 @@ def get_filenames(thePath,baseName):
 ###############################################################################
 # PATH AND FILENAMES
 ###############################################################################
-PATH_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM"
+PATH_DATASET= "/home/svillhauer/Desktop/AI_Project/UCAMGEN-main/SAMPLE_RANDOM"
 
 FNAME_OVERLAP='OVERLAP'
 FNAME_RELPOSX='IMGRPOSX'
