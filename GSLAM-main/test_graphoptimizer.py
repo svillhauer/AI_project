@@ -42,7 +42,7 @@ PLOT_ONLINE=False
 ###############################################################################
 
 # Create the data simulator object
-dataSimulator=DataSimulator('/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM',minOverlap=15)
+dataSimulator=DataSimulator('/home/svillhauer/Desktop/AI_Project/UCAMGEN-main/SAMPLE_RANDOM',minOverlap=15)
 
 # Pick covariances from the dataSimulator
 odoCovariance=loopCovariance=dataSimulator.odoCovariance

@@ -106,7 +106,7 @@ class LoopReader:
         #######################################################################
 
         print('LOADING OVERLAP MATRIX. PLEASE BE PATIENT.')
-        overlapmatrix_directory = "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/RANDOM_SAMPLE/"
+        overlapmatrix_directory = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/RANDOM_SAMPLE/"
 
         # Read the matrix and divide by 100 to have values in [0,1]
         overlapMatrix=np.loadtxt(os.path.join(overlapmatrix_directory,'OVERLAP.csv'),delimiter=',')/100

@@ -44,9 +44,9 @@ import shutil
 # LOOPREADER PARAMETERS
 #------------------------------------------------------------------------------
 
-image_folder = "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
-PATH_TRAIN_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
-PATH_TEST_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
+image_folder = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
+PATH_TRAIN_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
+PATH_TEST_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
 DATA_CONTINUOUS=False;
 DATA_GROUPS=[[0,0.5],[0.5,2]]
 DATA_SEPARATION=3
@@ -75,7 +75,7 @@ DO_REGRESSION=False
 RETRAIN_FEATURE_EXTRACTOR=True
 LOOP_EPOCHS=10
 VAL_SPLIT=0.2
-AUTOENCODER_BASENAME= "/home/svillhauer/Desktop/AI Project/AUTOENCODER-main/MODELSFINAL/AUTOENCODER_128_128_16_EPOCHS100"
+AUTOENCODER_BASENAME= "/home/svillhauer/Desktop/AI_project/AUTOENCODER-main/MODELSFINAL/AUTOENCODER_128_128_16_EPOCHS100"
 
 ###############################################################################
 # CREATE THE TRAIN AND VALIDATION LOOP GENERATORS
