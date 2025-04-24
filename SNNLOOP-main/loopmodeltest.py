@@ -192,12 +192,49 @@ print('[EVALUATING]')
 loopModel.evaluate(testGenerator)
 print('[EVALUATED]')
 
+# Print some model weights, for debugging 
+print("\nModel summary:")
+loopModel.theModel.summary()
+
+print("\nSample model weights (first layer):")
+weights = loopModel.theModel.get_weights()
+for i, w in enumerate(weights):
+    print(f"Layer {i}: shape {w.shape}")
+    print(w.flatten()[:5])  # just print first 5 values for brevity
+    if i >= 1:
+        break
+
+
+# Save the trained model
+MODEL_SAVE_PATH = '/home/svillhauer/Desktop/AI Project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16'
+loopModel.save(MODEL_SAVE_PATH)
+print(f"Model saved to {MODEL_SAVE_PATH}.h5")
+
+# Make sue model is saved properly, debugging step 
+print("Files saved:")
+for f in os.listdir(os.path.dirname(MODEL_SAVE_PATH)):
+    if os.path.basename(MODEL_SAVE_PATH) in f:
+        print(f)
+
+
+
+
 ###############################################################################
 # PRINT AND SAVE PREDICTIONS AS MONTAGE
 ###############################################################################
 
 [X,y]=testGenerator.__getitem__(0)
+
 raw_predictions = loopModel.predict(X)
+interpreted_predictions = np.round(raw_predictions)
+
+print("First 15 raw predictions:", raw_predictions.flatten()[:15]) # Print raw predictions, ensure loops are detected
+print("First 15 rounded predictions:", interpreted_predictions.flatten()[:15])
+print("First 15 ground truths:", y[:15])
+
+
+
+
 interpreted_predictions = np.round(raw_predictions)
 
 # Modify red channel based on predictions

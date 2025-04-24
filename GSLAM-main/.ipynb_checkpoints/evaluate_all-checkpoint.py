@@ -273,17 +273,18 @@ from graphoptimizer import GraphOptimizer
 from loopmodel import LoopModel
 from imagematcher import ImageMatcher
 
+
 ###############################################################################
 # GLOBAL PARAMETERS
 ###############################################################################
 
 # Path to dataset folder
-PATH_DATASET= "/home/svillhauer/Desktop/AI Project/UCAMGEN-main/SAMPLE_RANDOM"
+PATH_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM"
 #PATH_DATASET='../../DATA/RANDSMALL/'
 
 # Path to trained Siamese Neural Network (loop detector) base name (file name
 # without extension).
-PATH_NNMODEL= "/home/svillhauer/Desktop/AI Project/SNNLOOP-main/MODELS/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16"
+PATH_NNMODEL= "/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16"
 #PATH_NNMODEL = '../../DATA/MODELS/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_32_16_EPOCHS10_CATEGORICAL_G0_05_G05_2_ENCODERTRAINED_LABELSNOTINVERTED'
 
 # Enable/disable components. Components are used in the following order:
@@ -297,19 +298,19 @@ PATH_NNMODEL= "/home/svillhauer/Desktop/AI Project/SNNLOOP-main/MODELS/LOOP_AUTO
 # If a component is disabled, the output of the previous one is used as its
 # input
 ENABLE_NN=True
-ENABLE_RANSAC=False
-ENABLE_REJECTION=False
+ENABLE_RANSAC=True
+ENABLE_REJECTION=True
 
 # How motion between loop closing images is estimated. Possible values are:
 # 0: Simulated, 1: RANSAC
-MOTION_ESTIMATOR= 0
+MOTION_ESTIMATOR= 1
 
 # Only images grabbed LOOP_MARGIN time steps before the current one are
 # considered as loop candidates. Images are compared with the current one in
 # LOOP_SEPARATION steps. The larger this value the faster the execution and
 # the more the loops that can be missed.
-LOOP_MARGIN=10
-LOOP_SEPARATION=10
+LOOP_MARGIN=1
+LOOP_SEPARATION=1
 
 # Plot trajectory, loops and robot while accessing to the data. Illustrative
 # but time consuming.
@@ -347,6 +348,8 @@ odoCovariance=loopCovariance=dataSimulator.odoCovariance
 # Create the Siamese NN loop detector and load the parameters
 loopModel=LoopModel()
 loopModel.load(PATH_NNMODEL)
+print("Model loaded successfully.")
+
 
 # Create the image mather
 theMatcher=ImageMatcher()
@@ -422,11 +425,25 @@ while dataSimulator.update():
                 candidateImages.shape[0],
                 axis=0
             )
+
+            # curImageRepeated = np.repeat(curImage.reshape((1, 64, 64, 3)), candidateImages.shape[0], axis=0)
+            # curImageRepeated = curImageRepeated.astype('float32') / 255.0
+            # candidateImages = candidateImages.astype('float32') / 255.0
+
             tStart = time()
-            currentPredictions = np.argmax(
-                loopModel.predict([curImageRepeated, candidateImages]),
-                axis=1
-            )
+            # currentPredictions = np.argmax(
+            #     loopModel.predict([curImageRepeated, candidateImages]),
+            #     axis=1
+            # )
+
+            preds = loopModel.predict([curImageRepeated, candidateImages])
+            currentPredictions = (preds > 0.5).astype(int).flatten()
+
+            # print("NN raw predictions:", preds.flatten())
+            # print("NN binary predictions:", currentPredictions)
+
+
+
             tEnd = time()
             timeNN += (tEnd - tStart)
             
@@ -544,6 +561,13 @@ while dataSimulator.update():
 ###############################################################################
 # GET SOME STATS
 ###############################################################################
+print()
+print('Quick loop summary:')
+print('Detected loops (NN only):', np.sum(theLoops[3, :]))
+print('Accepted loops (final):', np.sum(theLoops[5, :]))
+
+
+
 
 # Plot the final trajectory/loops/...
 plt.figure()
