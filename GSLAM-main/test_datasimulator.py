@@ -48,7 +48,7 @@ PLOT_ONLINE=False
 ###############################################################################
 
 # Create the data simulator object with dedault parameters
-dataSimulator=DataSimulator('/home/svillhauer/Desktop/AI_Project/UCAMGEN-main/SAMPLE_RANDOM'
+dataSimulator=DataSimulator('/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM'
 ,minOverlap=30)
 
 # Initialize X (current pose) and Xhist (all poses, used to plot later)
