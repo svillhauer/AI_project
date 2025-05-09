@@ -23,6 +23,9 @@ import os
 from tensorflow.keras.utils import plot_model
 from time import time
 from skimage.io import imread
+import tensorflow as tf
+
+
 
 class ModelWrapper:
 
@@ -61,8 +64,14 @@ class ModelWrapper:
 ###############################################################################
 # PREDICT
 ###############################################################################
-    def predict(self,*args,**kwargs):
-        return self.theModel.predict(*args,**kwargs)
+    # def predict(self,*args,**kwargs):
+    #     return self.theModel.predict(*args,**kwargs)
+    
+    def predict(self, *args, **kwargs):
+        import tensorflow as tf
+        with tf.device('/CPU:0'):
+            return self.theModel.predict(*args, **kwargs)
+
 
 ###############################################################################
 # PRINT MODEL SUMMARY
@@ -102,13 +111,16 @@ class ModelWrapper:
 ###############################################################################
 # LOADS MODEL AND HISTORY FROM DISK IF POSSIBLE
 ###############################################################################
-    def load(self,baseName):
+    def load(self, baseName):
         if self.is_saved(baseName):
-            self.theModel=load_model(baseName+'.h5')
-            with open(baseName+'_HISTORY.pkl','rb') as inFile:
-                [self.trainHistory,self.trainTime,self.evaluationResults,self.metricsNames]=load(inFile)
+            print(f"[LOADING MODEL ON CPU] {baseName}.h5")
+            with tf.device('/CPU:0'):
+                self.theModel = load_model(baseName + '.h5')
+            with open(baseName + '_HISTORY.pkl', 'rb') as inFile:
+                [self.trainHistory, self.trainTime, self.evaluationResults, self.metricsNames] = load(inFile)
         else:
             print('[LOADING ABORTED] Model file not found.')
+
 
 ###############################################################################
 # PLOTS THE MODEL ARCHITECTURE

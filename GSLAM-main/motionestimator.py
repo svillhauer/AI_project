@@ -85,6 +85,7 @@ class MotionEstimator:
             # if the number of elements in consensus_set is > d
             #         (this implies that we may have found a good model,
             #         now test how good it is)
+            
             if consensusSet.shape[0]>Sref.shape[1]*self.minPointsInConsensusMultiplier:
                 # this_model := model parameters fitted to all points in consensus_set
                 thisModel=least_squares_cartesian(Sref[:,consensusSet],Scur[:,consensusSet])
@@ -101,5 +102,7 @@ class MotionEstimator:
                     bestConsensusSet=consensusSet
                     bestError=thisError
         hasFailed=bestConsensusSet.size==0
+
+
 
         return bestModel,hasFailed,bestConsensusSet
