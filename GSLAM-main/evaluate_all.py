@@ -660,7 +660,7 @@ from rl_loop_agent import RLLoopAgent
 # Paths
 PATH_DATASET = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM"
 PATH_NNMODEL = "/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16"
-PATH_RL_AGENT = "/home/svillhauer/Desktop/AI_project/GSLAM-main/runs/rl_loops_20250506_215821/agent_ep0.pt"
+PATH_RL_AGENT = "/home/svillhauer/Desktop/AI_project/GSLAM-main/runs/rl_loops_20250509_200150/agent_ep0.pt"
 
 # Settings
 ENABLE_NN = True
