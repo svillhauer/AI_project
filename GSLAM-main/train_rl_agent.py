@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -68,7 +67,8 @@ os.makedirs(save_dir, exist_ok=True)
 writer = SummaryWriter(log_dir=save_dir)
 
 loop_model = LoopModel()
-loop_model.load("/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
+# loop_model.load("/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
+loop_model.load("/home/mundus/svillhaue213/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
 
 def extract_features(i_ref, i_cur):
     diff = np.abs(i_ref - i_cur).mean()
@@ -79,7 +79,8 @@ epsilon = EPS_START
 correct_decisions = 0
 
 for episode in range(EPISODES):
-    ds = DataSimulator("/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+    #ds = DataSimulator("/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+    ds = DataSimulator("/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
     optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
 
     preID, preImage = ds.get_image()
