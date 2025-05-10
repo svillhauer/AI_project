@@ -11,7 +11,7 @@ import datetime
 from datasimulator import DataSimulator
 from loopmodel import LoopModel
 from graphoptimizer import GraphOptimizer
-from util import compute_absolute_trajectory_error, compose_trajectory
+from util import compute_absolute_trajectory_error
 
 # Detect and use GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,7 +48,7 @@ class ReplayBuffer:
         return len(self.buffer)
 
 # Training settings
-EPISODES = 5
+EPISODES = 2
 BATCH_SIZE = 32
 GAMMA = 0.99
 LR = 1e-4
@@ -80,14 +80,30 @@ steps_done = 0
 epsilon = EPS_START
 correct_decisions = 0
 
+# for episode in range(EPISODES):
+#     ds = DataSimulator("/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+#     optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
+
+
+DS_NOISES = [[0.625, np.pi / (180 * 4)], [2.5, np.pi / 180], [5, 2 * np.pi / 180]]
+
 for episode in range(EPISODES):
-    ds = DataSimulator("/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
-    optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
+    motionSigma, angleSigma = random.choice(DS_NOISES)
+    ds = DataSimulator(
+        "/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM",
+        loadImages=True,
+        motionSigma=motionSigma,
+        angleSigma=angleSigma
+    )
 
     preID, preImage = ds.get_image()
     allID = [preID]
     allImages = [preImage]
     total_reward = 0
+
+
+
+
 
     while ds.update():
         curID, curImage = ds.get_image()
