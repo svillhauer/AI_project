@@ -96,6 +96,8 @@ for episode in range(EPISODES):
         angleSigma=angleSigma
     )
 
+    optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
+
     preID, preImage = ds.get_image()
     allID = [preID]
     allImages = [preImage]

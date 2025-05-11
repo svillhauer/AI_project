@@ -45,7 +45,7 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-EPISODES = 5
+EPISODES = 2
 BATCH_SIZE = 32
 GAMMA = 0.99
 LR = 1e-4
@@ -67,8 +67,8 @@ os.makedirs(save_dir, exist_ok=True)
 writer = SummaryWriter(log_dir=save_dir)
 
 loop_model = LoopModel()
-# loop_model.load("/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
-loop_model.load("/home/mundus/svillhaue213/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
+loop_model.load("/home/svillhauer/Desktop/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
+#loop_model.load("/home/mundus/svillhaue213/AI_project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16")
 
 def extract_features(i_ref, i_cur):
     diff = np.abs(i_ref - i_cur).mean()
@@ -78,15 +78,29 @@ steps_done = 0
 epsilon = EPS_START
 correct_decisions = 0
 
+# for episode in range(EPISODES):
+#     ds = DataSimulator("/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+#     #ds = DataSimulator("/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+#     optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
+
+DS_NOISES = [[0.625, np.pi / (180 * 4)], [2.5, np.pi / 180], [5, 2 * np.pi / 180]]
+
 for episode in range(EPISODES):
-    #ds = DataSimulator("/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
-    ds = DataSimulator("/home/mundus/svillhaue213/AI_project/UCAMGEN-main/SAMPLE_RANDOM", loadImages=True)
+    motionSigma, angleSigma = random.choice(DS_NOISES)
+    ds = DataSimulator(
+        "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM",
+        loadImages=True,
+        motionSigma=motionSigma,
+        angleSigma=angleSigma
+    )
+
     optimizer_nn = GraphOptimizer(initialID=0, minLoops=5, doFilter=False)
 
     preID, preImage = ds.get_image()
     allID = [preID]
     allImages = [preImage]
     total_reward = 0
+
 
     while ds.update():
         curID, curImage = ds.get_image()
