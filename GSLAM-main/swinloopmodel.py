@@ -5,93 +5,73 @@ from torchvision import transforms
 from PIL import Image
 import numpy as np
 
-class SwinLoopModel:
+class SwinLoopModel(nn.Module):
     def __init__(self, model_path, model_name="microsoft/swin-tiny-patch4-window7-224", device=None):
+        super().__init__()
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Load Swin model
+        # Swin backbone
         self.swin = SwinModel.from_pretrained(model_name)
         for param in self.swin.parameters():
             param.requires_grad = False
 
+        # Classifier
         hidden_size = self.swin.config.hidden_size
         self.classifier = nn.Sequential(
-            nn.Linear(hidden_size * 2, 256),
+            nn.Linear(hidden_size * 2, 512),
             nn.ReLU(),
-            nn.Linear(256, 1),
+            nn.Dropout(0.2),
+            nn.Linear(512, 1),
             nn.Sigmoid()
         )
 
-        # # Combine
-        # self.model = nn.Module()
-        # self.model.swin = self.swin
-        # self.model.fc = self.classifier
-        # self.model.to(self.device)
+        # Load and adapt classifier weights
+        classifier_state = torch.load(model_path, map_location=self.device)
+        classifier_state = {k.replace("classifier.", ""): v 
+                          for k, v in classifier_state.items()}  # KEY FIX
+        self.classifier.load_state_dict(classifier_state)
+        self.classifier.to(self.device)
 
-        # # Load weights
-        # state_dict = torch.load(model_path, map_location=self.device)
-        # self.model.fc.load_state_dict(state_dict)
-
-        class SwinWrapper(nn.Module):
-            def __init__(self, swin, classifier):
-                super().__init__()
-                self.swin = swin
-                self.fc = classifier
-
-            def forward(self, img1, img2):
-                emb1 = self.swin(pixel_values=img1).pooler_output
-                emb2 = self.swin(pixel_values=img2).pooler_output
-                combined = torch.cat([emb1, emb2], dim=1)
-                return self.fc(combined)
-
-        # Wrap everything
-        self.model = SwinWrapper(self.swin, self.classifier).to(self.device)
-
-        # Load entire model weights
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        # ... rest of the class remains the same ...
 
 
-        # Setup processor
+        # Preprocessing
         self.processor = AutoImageProcessor.from_pretrained(model_name)
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.processor.image_mean, std=self.processor.image_std)
         ])
-        self.model.eval()
 
-    # def _prepare(self, img):
-    #     # Assumes image is a numpy array
-    #     if img.ndim == 2:  # grayscale
-    #         img = np.stack([img] * 3, axis=-1)
-    #     img = Image.fromarray((img * 255).astype(np.uint8)) if img.max() <= 1.0 else Image.fromarray(img.astype(np.uint8))
-    #     return self.transform(img).unsqueeze(0).to(self.device)
-    
-    def _prepare(self, img):
-        # Convert PIL to numpy array
+    def _prepare_image(self, img):
         if isinstance(img, Image.Image):
             img = np.array(img)
-
-        if img.ndim == 2:  # grayscale
+        if img.ndim == 2:
             img = np.stack([img] * 3, axis=-1)
+        if img.max() <= 1.0:
+            img = (img * 255).astype(np.uint8)
+        return self.transform(Image.fromarray(img)).unsqueeze(0).to(self.device)
 
-        img = Image.fromarray((img * 255).astype(np.uint8)) if img.max() <= 1.0 else Image.fromarray(img.astype(np.uint8))
-        return self.transform(img).unsqueeze(0).to(self.device)
+    def extract_features(self, img):
+        with torch.no_grad():
+            img_tensor = self._prepare_image(img)
+            # Use mean pooling for feature vector
+            return self.swin(img_tensor).last_hidden_state.mean(dim=1)
 
+    def compare_features(self, feat1, feat2):
+        with torch.no_grad():
+            combined = torch.cat([feat1, feat2], dim=1)
+            return self.classifier(combined).squeeze()  # Remove .item() here
+
+
+    def forward(self, img1, img2):
+        feat1 = self.extract_features(img1)
+        feat2 = self.extract_features(img2)
+        return self.compare_features(feat1, feat2)
 
     def predict(self, img_pair):
-        img1, img2 = img_pair
-        img1_tensor = self._prepare(img1)
-        img2_tensor = self._prepare(img2)
-
         with torch.no_grad():
-            emb1 = self.model.swin(pixel_values=img1_tensor).pooler_output
-            emb2 = self.model.swin(pixel_values=img2_tensor).pooler_output
-            combined = torch.cat([emb1, emb2], dim=1)
-            output = self.model.fc(combined)
-
-        return output.cpu().numpy()
-
+            return np.array([[self(*img_pair)]])
 
 # import torch
 # import torch.nn as nn
