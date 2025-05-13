@@ -18,17 +18,17 @@ def normalize_angle(angle):
     return (angle + math.pi) % (2 * math.pi) - math.pi
 
 ###############################################################################
-# POSE COMPOSITION (CORE FIX)
+# POSE COMPOSITION (GRADIENT-FRIENDLY VERSION)
 ###############################################################################
 def compose_references(X1, X2):
-    """Compose two 2D transformations with consistent (3,1) output shape"""
+    """Compose two 2D transformations with gradient tracking"""
     # Handle PyTorch tensors
     if isinstance(X1, torch.Tensor) or isinstance(X2, torch.Tensor):
         device = X1.device if isinstance(X1, torch.Tensor) else X2.device
         
-        # Ensure 2D tensor shape (3,1)
-        X1 = X1.view(3, 1) if X1.dim() == 1 else X1
-        X2 = X2.view(3, 1) if X2.dim() == 1 else X2
+        # Ensure proper tensor dimensions and gradient tracking
+        X1 = X1.view(3, 1).detach().requires_grad_(True) if X1.requires_grad else X1.view(3, 1)
+        X2 = X2.view(3, 1).detach().requires_grad_(True) if X2.requires_grad else X2.view(3, 1)
         
         theta = X1[2, 0]
         c = torch.cos(theta)
@@ -38,13 +38,14 @@ def compose_references(X1, X2):
         dy = X2[1, 0]
         dtheta = X2[2, 0]
         
+        # Maintain computation graph using tensor operations
         x = X1[0, 0] + dx * c - dy * s
         y = X1[1, 0] + dx * s + dy * c
         theta = normalize_angle(theta + dtheta)
         
-        return torch.tensor([[x], [y], [theta]], device=device, dtype=torch.float32)
+        return torch.stack([x, y, theta]).view(3, 1).to(device).requires_grad_(True)
     
-    # Handle NumPy arrays
+    # NumPy implementation
     c = np.cos(X1[2, 0])
     s = np.sin(X1[2, 0])
     return np.array([
@@ -54,25 +55,25 @@ def compose_references(X1, X2):
     ])
 
 ###############################################################################
-# POSE INVERSION
+# POSE INVERSION (GRADIENT-FRIENDLY VERSION)
 ###############################################################################
 def invert_reference(X):
-    """Invert a 2D transformation (supports NumPy/PyTorch)"""
+    """Invert a 2D transformation with gradient tracking"""
     if isinstance(X, torch.Tensor):
         c = torch.cos(X[2, 0])
         s = torch.sin(X[2, 0])
-        return torch.tensor([
-            [-X[0, 0]*c - X[1, 0]*s],
-            [ X[0, 0]*s - X[1, 0]*c],
-            [normalize_angle(-X[2, 0])]
-        ], device=X.device)
+        return torch.stack([
+            -X[0, 0]*c - X[1, 0]*s,
+            X[0, 0]*s - X[1, 0]*c,
+            normalize_angle(-X[2, 0])
+        ]).view(3, 1).requires_grad_(True)
     
     # NumPy implementation
     c = np.cos(X[2, 0])
     s = np.sin(X[2, 0])
     return np.array([
         [-X[0, 0]*c - X[1, 0]*s],
-        [ X[0, 0]*s - X[1, 0]*c],
+        [X[0, 0]*s - X[1, 0]*c],
         [normalize_angle(-X[2, 0])]
     ])
 
@@ -85,9 +86,9 @@ def compose_trajectory(poses):
         return np.zeros((3, 0))
     
     if isinstance(poses[0], torch.Tensor):
-        traj = [poses[0].clone()]
+        traj = [poses[0].clone().requires_grad_(True)]
         for pose in poses[1:]:
-            traj.append(compose_references(traj[-1], pose))
+            traj.append(compose_references(traj[-1], pose.requires_grad_(True)))
         return torch.cat(traj, dim=1)
     else:
         traj = [poses[0].copy()]
@@ -102,6 +103,11 @@ def least_squares_cartesian(Sref, Scur):
     """Motion estimation (supports NumPy/PyTorch)"""
     if isinstance(Sref, torch.Tensor) or isinstance(Scur, torch.Tensor):
         device = Sref.device if isinstance(Sref, torch.Tensor) else Scur.device
+        
+        # Ensure gradient tracking
+        Sref = Sref.requires_grad_(True) if not Sref.requires_grad else Sref
+        Scur = Scur.requires_grad_(True) if not Scur.requires_grad else Scur
+        
         mx = torch.mean(Scur[0, :])
         my = torch.mean(Scur[1, :])
         mx2 = torch.mean(Sref[0, :])
@@ -115,7 +121,7 @@ def least_squares_cartesian(Sref, Scur):
         o = torch.atan2(Sxy-Syx, Sxx+Syy)
         x = mx2 - (mx*torch.cos(o) - my*torch.sin(o))
         y = my2 - (mx*torch.sin(o) + my*torch.cos(o))
-        return torch.tensor([[x], [y], [o]], device=device)
+        return torch.stack([x, y, o]).view(3, 1).to(device).requires_grad_(True)
     
     # NumPy implementation
     mx = np.mean(Scur[0, :])
@@ -132,5 +138,3 @@ def least_squares_cartesian(Sref, Scur):
     x = mx2 - (mx*math.cos(o) - my*math.sin(o))
     y = my2 - (mx*math.sin(o) + my*math.cos(o))
     return np.array([[x], [y], [o]])
-
-# Rest of the functions remain similar with consistent dimension handling
