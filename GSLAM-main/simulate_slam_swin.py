@@ -11,6 +11,29 @@ from imagematcher import ImageMatcher
 from util import loadcsv, compute_quality_metrics, evaluate_trajectory, compute_absolute_trajectory_error
 import matplotlib.pyplot as plt
 
+def align_trajectory_umeyama(est_traj, gt_traj, correct_scale=True):
+    est_traj = np.asarray(est_traj)
+    gt_traj = np.asarray(gt_traj)
+    assert est_traj.shape == gt_traj.shape
+    est_centroid = np.mean(est_traj, axis=0)
+    gt_centroid = np.mean(gt_traj, axis=0)
+    est_centered = est_traj - est_centroid
+    gt_centered = gt_traj - gt_centroid
+    H = est_centered.T @ gt_centered
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+    if np.linalg.det(R) < 0:
+        Vt[-1,:] *= -1
+        R = Vt.T @ U.T
+    if correct_scale:
+        scale = np.trace(np.diag(S)) / np.trace(est_centered.T @ est_centered)
+    else:
+        scale = 1.0
+    t = gt_centroid - scale * R @ est_centroid
+    aligned_traj = (scale * R @ est_traj.T).T + t
+    return aligned_traj, (scale, R, t)
+
+
 # ========== CONFIGURATION ==========
 csv_path = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/OVERLAP_PAIRS.csv"
 img_dir = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/IMAGES"
@@ -193,51 +216,100 @@ print(f"Accuracy: {acc:.3f}, Precision: {prec:.3f}, Recall: {rec:.3f}")
 # ate, mean_ate, std_ate = compute_absolute_trajectory_error(X_est, X_gt)
 # print(f"Absolute Trajectory Error: {mean_ate:.3f} ± {std_ate:.3f}")
 
+# # ========== TRAJECTORY EVALUATION ==========
+# # Get optimized poses (already NumPy arrays)
+# X_est = compose_trajectory(optimizer.get_poses())
+
+# # Convert ground truth poses from PyTorch tensors to NumPy
+# X_gt = compose_trajectory([
+#     p.detach().cpu().numpy() if isinstance(p, torch.Tensor) else p 
+#     for p in poses[:num_frames]
+# ])
+
+# # Compute error metrics
+# ate, mean_ate, std_ate = compute_absolute_trajectory_error(X_est, X_gt)
+# print(f"Absolute Trajectory Error: {mean_ate:.3f} ± {std_ate:.3f}")
+
+
+# # ========== SAVE OUTPUTS ==========
+# print("\n[INFO] Saving results...")
+# pd.DataFrame(loop_stats, columns=["i", "j", "label", "predicted", "passed_ransac", "added", "motion"])\
+#   .to_csv(os.path.join(output_dir, "loop_stats.csv"), index=False)
+
+# # Save trajectory plot
+# plt.figure(figsize=(10, 10))
+# plt.plot(X_est[0], X_est[1], 'b-', label="Optimized Trajectory")
+# plt.plot(X_gt[0], X_gt[1], 'k--', label="Ground Truth")
+# plt.legend()
+# plt.axis('equal')
+# plt.grid(True)
+# plt.savefig(os.path.join(output_dir, "trajectory_comparison.png"))
+
+# # Zoomed in trajectory plot 
+# fig, ax = plt.subplots(figsize=(10, 10))
+# ax.plot(X_est[0], X_est[1], 'b-', label="Optimized Trajectory")
+# ax.plot(X_gt[0], X_gt[1], 'k--', label="Ground Truth")
+# ax.legend()
+# ax.grid(True)
+# ax.set_xlim(-1000, 3000)
+# ax.set_ylim(-4000, 0)
+# ax.set_xlabel("X axis")
+# ax.set_ylabel("Y axis")
+# ax.set_aspect('equal', adjustable='box')  # or adjustable='datalim'
+# plt.savefig(os.path.join(output_dir, "trajectory_comparison_zoom.png"))
+# plt.close()
+
+
+# print("[SUCCESS] SLAM simulation complete!")
+
 # ========== TRAJECTORY EVALUATION ==========
+
 # Get optimized poses (already NumPy arrays)
 X_est = compose_trajectory(optimizer.get_poses())
-
-# Convert ground truth poses from PyTorch tensors to NumPy
 X_gt = compose_trajectory([
     p.detach().cpu().numpy() if isinstance(p, torch.Tensor) else p 
     for p in poses[:num_frames]
 ])
 
-# Compute error metrics
-ate, mean_ate, std_ate = compute_absolute_trajectory_error(X_est, X_gt)
-print(f"Absolute Trajectory Error: {mean_ate:.3f} ± {std_ate:.3f}")
+# Use only the (x, y) part for alignment (if your data is 3xN)
+X_est_xy = X_est[:2].T  # Shape (N, 2)
+X_gt_xy = X_gt[:2].T    # Shape (N, 2)
 
+# If your trajectories are (3, N), transpose to (N, 3)
+if X_est_xy.shape[0] != X_gt_xy.shape[0]:
+    min_len = min(X_est_xy.shape[0], X_gt_xy.shape[0])
+    X_est_xy = X_est_xy[:min_len]
+    X_gt_xy = X_gt_xy[:min_len]
 
-# ========== SAVE OUTPUTS ==========
-print("\n[INFO] Saving results...")
-pd.DataFrame(loop_stats, columns=["i", "j", "label", "predicted", "passed_ransac", "added", "motion"])\
-  .to_csv(os.path.join(output_dir, "loop_stats.csv"), index=False)
+# Align estimated to ground truth
+X_est_aligned, (scale, R, t) = align_trajectory_umeyama(X_est_xy, X_gt_xy, correct_scale=True)
 
-# Save trajectory plot
+# Plot aligned trajectories
 plt.figure(figsize=(10, 10))
-plt.plot(X_est[0], X_est[1], 'b-', label="Optimized Trajectory")
-plt.plot(X_gt[0], X_gt[1], 'k--', label="Ground Truth")
+plt.plot(X_est_aligned[:,0], X_est_aligned[:,1], 'b-', label="Aligned Optimized Trajectory")
+plt.plot(X_gt_xy[:,0], X_gt_xy[:,1], 'k--', label="Ground Truth")
 plt.legend()
 plt.axis('equal')
 plt.grid(True)
-plt.savefig(os.path.join(output_dir, "trajectory_comparison.png"))
+plt.savefig(os.path.join(output_dir, "trajectory_comparison_aligned.png"))
 
-# Zoomed in trajectory plot 
+# Zoomed in trajectory plot (aligned)
 fig, ax = plt.subplots(figsize=(10, 10))
-ax.plot(X_est[0], X_est[1], 'b-', label="Optimized Trajectory")
-ax.plot(X_gt[0], X_gt[1], 'k--', label="Ground Truth")
+ax.plot(X_est_aligned[:,0], X_est_aligned[:,1], 'b-', label="Aligned Optimized Trajectory")
+ax.plot(X_gt_xy[:,0], X_gt_xy[:,1], 'k--', label="Ground Truth")
 ax.legend()
 ax.grid(True)
 ax.set_xlim(-1000, 3000)
 ax.set_ylim(-4000, 0)
 ax.set_xlabel("X axis")
 ax.set_ylabel("Y axis")
-ax.set_aspect('equal', adjustable='box')  # or adjustable='datalim'
-plt.savefig(os.path.join(output_dir, "trajectory_comparison_zoom.png"))
+ax.set_aspect('equal', adjustable='box')
+plt.savefig(os.path.join(output_dir, "trajectory_comparison_zoom_aligned.png"))
 plt.close()
 
-
-print("[SUCCESS] SLAM simulation complete!")
+# Compute error metrics on aligned trajectory
+ate = np.sqrt(np.mean(np.linalg.norm(X_est_aligned - X_gt_xy, axis=1) ** 2))
+print(f"Aligned Absolute Trajectory Error: {ate:.3f}")
 
 
 # import os
