@@ -16,9 +16,9 @@ import time
 csv_path = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/OVERLAP_PAIRS.csv"
 output_dir = "/home/svillhauer/Desktop/AI_project/SNNLOOP-main/TRAN_RESULTS_REAL"
 embedding_dir = "/home/svillhauer/Desktop/AI_project/SNNLOOP-main/TRAN_RESULTS_REAL/embeddings"
-batch_size = 64
-num_epochs = 10
-learning_rate = 1e-3
+batch_size = 10
+num_epochs = 15
+learning_rate = 1e-4 # change to 1e-4 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ====== DATA PREPARATION ======

@@ -43,6 +43,7 @@ model_name = "microsoft/swin-tiny-patch4-window7-224"
 output_dir = "./swin_slam_results"
 os.makedirs(output_dir, exist_ok=True)
 
+
 # Constants with explicit dtype and gradient tracking
 PIX_TO_WORLD = torch.tensor([10.0, 10.0, 1.0], dtype=torch.float32, device='cuda').view(3, 1)
 loopCovariance = torch.diag(torch.tensor([0.01, 0.01, 0.01], dtype=torch.float32, device='cuda'))
@@ -63,9 +64,20 @@ loop_pairs = set(zip(loop_df["img1"], loop_df["img2"])).union(set(zip(loop_df["i
 poses_array = loadcsv(odom_file, delimiter=",").reshape(-1, 3).astype(np.float32)
 poses = [torch.tensor(p, device=device, dtype=torch.float32).view(3, 1) for p in poses_array]
 
+
 # Match frames to available images
 img_files = sorted([f for f in os.listdir(img_dir) if f.endswith(".png") and f.startswith("IMAGE")])
 num_frames = min(len(poses), len(img_files))
+
+# Load ground truth positions
+# Print basic statistics
+gt_positions = np.array([p.cpu().numpy() for p in poses[:num_frames]])
+print(f"Ground truth shape: {gt_positions.shape}")
+print(f"Min values: {np.min(gt_positions, axis=0)}")
+print(f"Max values: {np.max(gt_positions, axis=0)}")
+print(f"First 5 poses:\n{gt_positions[:5]}")
+print(f"Last 5 poses:\n{gt_positions[-5:]}")
+
 
 # ========== INITIALIZATION ==========
 print("[INFO] Initializing components...")
@@ -283,6 +295,15 @@ if X_est_xy.shape[0] != X_gt_xy.shape[0]:
 
 # Align estimated to ground truth
 X_est_aligned, (scale, R, t) = align_trajectory_umeyama(X_est_xy, X_gt_xy, correct_scale=True)
+
+# Plot the ground truth
+plt.figure(figsize=(10, 10))
+plt.plot(gt_positions[:, 0], gt_positions[:, 1], 'r.', markersize=1)
+plt.title("Raw Ground Truth Trajectory")
+plt.axis('equal')
+plt.grid(True)
+plt.savefig("raw_groundtruth.png")
+
 
 # Plot aligned trajectories
 plt.figure(figsize=(10, 10))

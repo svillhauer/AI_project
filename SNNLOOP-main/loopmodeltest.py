@@ -44,9 +44,9 @@ import shutil
 # LOOPREADER PARAMETERS
 #------------------------------------------------------------------------------
 
-image_folder = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
-PATH_TRAIN_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
-PATH_TEST_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/SAMPLE_RANDOM/IMAGES"
+image_folder = "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/IMAGES"
+PATH_TRAIN_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/IMAGES"
+PATH_TEST_DATASET= "/home/svillhauer/Desktop/AI_project/UCAMGEN-main/REALDATASET/IMAGES"
 DATA_CONTINUOUS=False;
 DATA_GROUPS=[[0,0.5],[0.5,2]]
 DATA_SEPARATION=3
@@ -75,7 +75,7 @@ DO_REGRESSION=False
 RETRAIN_FEATURE_EXTRACTOR=True
 LOOP_EPOCHS=10
 VAL_SPLIT=0.2
-AUTOENCODER_BASENAME= "/home/svillhauer/Desktop/AI_project/AUTOENCODER-main/MODELSFINAL/AUTOENCODER_128_128_16_EPOCHS100"
+AUTOENCODER_BASENAME= "/home/svillhauer/Desktop/AI_project/AUTOENCODER-main/REALDATASETMODELS/AUTOENCODER_128_128_16_EPOCHS100"
 
 ###############################################################################
 # CREATE THE TRAIN AND VALIDATION LOOP GENERATORS
@@ -138,6 +138,19 @@ loopModel.create(featureExtractorModel=autoModel.encoderModel,
 
 print('[TRAINING]')
 history = loopModel.fit(x=trainGenerator,validation_data=valGenerator,epochs=LOOP_EPOCHS)
+
+import pandas as pd
+
+# Save training metrics to CSV
+metrics_df = pd.DataFrame({
+    'epoch': list(range(1, LOOP_EPOCHS + 1)),
+    'train_loss': history.history['loss'],
+    'val_loss': history.history['val_loss'],
+    'train_acc': history.history.get('accuracy', history.history.get('acc')),
+    'val_acc': history.history.get('val_accuracy', history.history.get('val_acc')),
+})
+metrics_df.to_csv("loopmodel_training_metrics.csv", index=False)
+
 print('[TRAINING READY]')
 
 ###############################################################################
@@ -172,11 +185,15 @@ readerParams={'basePath':PATH_TEST_DATASET,
               'normalizeNoCategorical':DATA_NORMALIZE_NO_CATEGORICAL,
               'toCategorical':DATA_CATEGORICAL}
 readerBaseName=build_reader_basename(**readerParams)
+print(f"Reader basename path being used: {readerBaseName}.pkl")
+
 if theReader.is_saved(readerBaseName):
     theReader.load(readerBaseName)
 else:
     theReader.create(**readerParams)
-    theReader.save(readerBaseName)
+    #theReader.save(readerBaseName)
+    theReader.save(readerBaseName, forceOverwrite=True)
+
 
 testGenerator=LoopGenerator(theReader.loopSpecs,
                             theReader.get_image,
@@ -206,7 +223,7 @@ for i, w in enumerate(weights):
 
 
 # Save the trained model
-MODEL_SAVE_PATH = '/home/svillhauer/Desktop/AI Project/SNNLOOP-main/MODELSTESTING/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16'
+MODEL_SAVE_PATH = '/home/svillhauer/Desktop/AI_Project/SNNLOOP-main/AI_PROJECT2/LOOP_AUTO_128_128_16_EPOCHS100_DENSE_128_16'
 loopModel.save(MODEL_SAVE_PATH)
 print(f"Model saved to {MODEL_SAVE_PATH}.h5")
 

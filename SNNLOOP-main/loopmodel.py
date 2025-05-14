@@ -68,7 +68,10 @@ class LoopModel(ModelWrapper):
         self.theModel = Model([firstInput, secondInput], theOutput)
 
         # Compile the model
-        self.theModel.compile(optimizer='adam', loss=lossFunction, metrics=theMetrics)
+        #self.theModel.compile(optimizer='adam', loss=lossFunction, metrics=theMetrics)
+        from tensorflow.keras.optimizers import Adam
+        self.theModel.compile(optimizer=Adam(learning_rate=1e-4), loss=lossFunction, metrics=theMetrics)
+
 
     ###############################################################################
     # WRAP THE FIT FUNCTION TO RETURN HISTORY
